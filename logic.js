@@ -235,6 +235,7 @@ class Game {
         this.food = null;
         setTimeout(function(){
             var fadeTarget = document.getElementById("theCanvas");
+            document.getElementById("invitationContainer").style.display = 'inline';
             var fadeEffect = setInterval(function () {
                 if (!fadeTarget.style.opacity) {
                     fadeTarget.style.opacity = 1;
@@ -504,7 +505,6 @@ class Player {
 
 var lastTime = new Date();
 var game = new Game();
-// game.win();
 
 function animate() {
     let now = new Date();
