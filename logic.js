@@ -497,7 +497,7 @@ class Player {
 
 var lastTime = new Date();
 var game = new Game();
-game.win();
+// game.win();
 
 function animate() {
     let now = new Date();
