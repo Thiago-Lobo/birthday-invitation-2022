@@ -102,7 +102,7 @@ const DIRECTION_RIGHT = 3;
 
 const WIN_SIZE = 29 + 3;
 
-const gridWidth = window.innerWidth > 1280 ? 26 : 13;
+const gridWidth = window.innerWidth > window.innerHeight ? 26 : 13;
 const gridSizeX = window.innerWidth / gridWidth;
 const gridSizeY = gridSizeX;
 const gridHeight = Math.floor(window.innerHeight / gridSizeY);
