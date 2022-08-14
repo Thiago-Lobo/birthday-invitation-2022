@@ -102,7 +102,7 @@ const DIRECTION_RIGHT = 3;
 
 const WIN_SIZE = 29 + 3;
 
-const gridWidth = 13;
+const gridWidth = window.innerWidth > 1280 ? 26 : 13;
 const gridSizeX = window.innerWidth / gridWidth;
 const gridSizeY = gridSizeX;
 const gridHeight = Math.floor(window.innerHeight / gridSizeY);
@@ -373,6 +373,7 @@ class Player {
         this.isEnd = false;
         this.isWin = false;
         this.color = '#f58442'
+        this.headColor = '#125c21'
     }
 
     turn (direction) {
@@ -389,6 +390,9 @@ class Player {
 
             c.beginPath();
             c.fillStyle = this.color;
+            if (n == 0) {
+                c.fillStyle = this.headColor;
+            }
 
             if ((this.isEnd || this.isWin) && ((Date.now()) % 300 > 150)) {
                 c.fillStyle = 'white';
