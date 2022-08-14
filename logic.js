@@ -124,7 +124,7 @@ class Game {
     constructor() {
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
-        this.player = new Player(1, 4, this);
+        this.player = new Player(3, 4, this);
         this.randomizeFood();
 
         this.initializeInput();
@@ -365,9 +365,9 @@ class Player {
         this.y = y;
         this.timePerStep = 200; // ms per step
         this.stepTimer = 0;
-        this.direction = DIRECTION_DOWN;
         this.size = 3;
-        this.lastStepDirection = DIRECTION_DOWN;
+        this.direction = window.innerHeight > window.innerWidth ? DIRECTION_DOWN : DIRECTION_RIGHT;
+        this.lastStepDirection = this.direction;
         this.playerPieces = [];
         this.updatePlayerPieces();
         this.isEnd = false;
