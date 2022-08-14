@@ -248,13 +248,13 @@ class Game {
     }
 
     randomizeFood() {
-        let foodX = randomIntFromInterval(0, gridWidth);
-        let foodY = randomIntFromInterval(0, gridHeight);
+        let foodX = randomIntFromInterval(1, gridWidth - 1);
+        let foodY = randomIntFromInterval(1, gridHeight - 1);
         
         
         while (this.player.checkDeath(foodX, foodY)) {
-            foodX = randomIntFromInterval(0, gridWidth);
-            foodY = randomIntFromInterval(0, gridHeight);
+            foodX = randomIntFromInterval(1, gridWidth - 1);
+            foodY = randomIntFromInterval(1, gridHeight - 1);
         }
         
         this.food = new Food(foodX, foodY, this);
