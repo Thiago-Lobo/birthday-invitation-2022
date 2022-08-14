@@ -93,6 +93,8 @@ const canvas = createHiPPICanvas(window.innerWidth, window.innerHeight);
 const swiper = new Swipe(document);
 const c = canvas.getContext('2d');
 
+var audio = document.getElementById('audioScream');
+
 var lastSwipe = 'none';
 
 const DIRECTION_DOWN = 0;
@@ -391,29 +393,31 @@ class Player {
     }
 
     update(dt) {
-        this.stepTimer += dt;
-
-        if (this.stepTimer >= this.timePerStep) {
-            let dx = this.direction == DIRECTION_LEFT ? -1 : (this.direction == DIRECTION_RIGHT ? 1 : 0);
-            let dy = this.direction == DIRECTION_UP ? -1 : (this.direction == DIRECTION_DOWN ? 1 : 0);
-            
-            if (this.direction != this.lastStepDirection) {
-                this.game.curvePointGrid[this.x][this.y] = new PlayerCurvePoint(this.x, this.y, this.lastStepDirection, this.direction);
+        if (!this.isEnd) {
+            this.stepTimer += dt;
+    
+            if (this.stepTimer >= this.timePerStep) {
+                let dx = this.direction == DIRECTION_LEFT ? -1 : (this.direction == DIRECTION_RIGHT ? 1 : 0);
+                let dy = this.direction == DIRECTION_UP ? -1 : (this.direction == DIRECTION_DOWN ? 1 : 0);
+                
+                if (this.direction != this.lastStepDirection) {
+                    this.game.curvePointGrid[this.x][this.y] = new PlayerCurvePoint(this.x, this.y, this.lastStepDirection, this.direction);
+                }
+                
+                this.x += dx;
+                this.y += dy;
+                
+                if (this.checkDeath(this.x, this.y)) {
+                    this.die();
+                    return;
+                }
+    
+                this.lastStepDirection = this.direction;
+                this.updatePlayerPieces();
+                this.tryEat(this.x, this.y);
+                
+                this.stepTimer = 0;
             }
-            
-            this.x += dx;
-            this.y += dy;
-            
-            if (this.checkDeath(this.x, this.y)) {
-                this.die();
-                return;
-            }
-
-            this.lastStepDirection = this.direction;
-            this.updatePlayerPieces();
-            this.tryEat(this.x, this.y);
-            
-            this.stepTimer = 0;
         }
     }
 
@@ -469,6 +473,7 @@ class Player {
     }
 
     die() {
+        audio.play();
         this.game.startEndAnimations();
     }
 }
