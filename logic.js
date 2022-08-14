@@ -363,7 +363,7 @@ class Player {
         this.game = game;
         this.x = x;
         this.y = y;
-        this.timePerStep = 150; // ms per step
+        this.timePerStep = 200; // ms per step
         this.stepTimer = 0;
         this.direction = DIRECTION_DOWN;
         this.size = 3;
@@ -497,6 +497,7 @@ class Player {
 
 var lastTime = new Date();
 var game = new Game();
+game.win();
 
 function animate() {
     let now = new Date();
