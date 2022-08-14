@@ -100,14 +100,10 @@ const DIRECTION_LEFT = 1;
 const DIRECTION_UP = 2;
 const DIRECTION_RIGHT = 3;
 
-const gridWidth = 15;
+const gridWidth = 13;
 const gridSizeX = window.innerWidth / gridWidth;
 const gridSizeY = gridSizeX;
-console.log(gridSizeY)
-console.log(window.innerHeight)
-console.log(canvas.height)
 const gridHeight = Math.floor(window.innerHeight / gridSizeY);
-console.log(gridHeight);
 
 var img = new Image();
 img.src = document.getElementById('sprite1').src;
@@ -197,6 +193,9 @@ class Game {
 
         this.player.draw();
         this.food.draw();
+        if (this.animationFood) {
+            this.animationFood.draw();
+        }
 
         for (var x = 0; x < this.curvePointGrid.length; x++) {
             for (var y = 0; y < this.curvePointGrid[x].length; y++) {
@@ -209,13 +208,34 @@ class Game {
 
     update(dt) {
         this.player.update(dt);
+        this.food.update(dt);
+
+        if (this.animationFood) {
+            this.animationFood.update(dt);
+        }
+    }
+
+    startEndAnimations() {
+        this.food.isEnd = true;
+        this.player.isEnd = true;
     }
 
     end() {
-        this.foodGrid = new Array(gridWidth);
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
+
         this.player = new Player(1, 4, this);
+        
+        console.log("ending")
+        this.animationFood = new Food(this.food.x, this.food.y, this)
+        this.animationFood.sprite = this.food.sprite;
+        this.animationFood.isEnd = this.food.isEnd;
+        this.animationFood.width = this.food.width;
+        this.animationFood.height = this.food.height;
+        this.animationFood.scaleFactor = this.food.scaleFactor;
+        this.animationFood.scaleFactorSpeed = this.food.scaleFactorSpeed;
+        this.animationFood.doEnd = false;
+
         this.randomizeFood();
     }
 
@@ -229,44 +249,81 @@ class Game {
             foodY = randomIntFromInterval(0, gridHeight);
         }
         
-        this.food = new Food(foodX, foodY);
+        this.food = new Food(foodX, foodY, this);
     }
 }
 
 class Food {
-    constructor(x, y) {
+    constructor(x, y, game) {
         this.x = x;
         this.y = y;
         this.sprite = sprites[randomIntFromInterval(0, sprites.length)];
+        this.isEnd = false;
+        this.doEnd = true;
+        this.scaleFactor = 1.2;
+        this.game = game;
+        this.scaleFactorSpeed = 12;
     }
 
     draw() {
-        let scaleFactor = gridSizeX / this.sprite.width;
-        
-        if (this.sprite.width > this.sprite.height) {
-            scaleFactor = gridSizeY / this.sprite.height;
-        }
-
-        scaleFactor *= 1.2;
-
-        let width = this.sprite.width * scaleFactor;
-        let height = this.sprite.height * scaleFactor;
         let xOffset = this.x * gridSizeX + gridSizeX / 2;
         let yOffset = this.y * gridSizeY + gridSizeY / 2;
         let rotationScale = Math.sin(2 * Math.PI * 0.8 * Date.now() / 1000) * Math.PI / 7;
 
         c.translate(xOffset, yOffset);
         c.rotate(rotationScale);
-        c.drawImage(this.sprite, -width / 2, -height / 2, width, height);
+        c.drawImage(this.sprite, -this.width / 2, -this.height / 2, this.width, this.height);
         c.rotate(-rotationScale);
         c.translate(-xOffset, -yOffset);
+    
+    }
 
-        // c.drawImage(this.sprite, this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
+    update(dt) {
+        this.aspectCorrectionFactor = gridSizeX / this.sprite.width;
+        if (this.sprite.width > this.sprite.height) {
+            this.aspectCorrectionFactor = gridSizeY / this.sprite.height;
+        }
 
-        // c.beginPath();
-        // c.fillStyle = 'blue';
-        // c.fillRect(this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
-        // c.fill();
+        this.width = this.sprite.width * this.aspectCorrectionFactor * this.scaleFactor;
+        this.height = this.sprite.height * this.aspectCorrectionFactor * this.scaleFactor;
+
+        if (this.isEnd) {
+            let dx = window.innerWidth / 2 - (this.x * gridSizeX);
+            let dy = window.innerHeight / 2 - (this.y * gridSizeX);
+            let moveX = true;
+            let moveY = true;
+
+            if (Math.abs(dy) < 10) {
+                moveY = false;
+            }
+
+            if (Math.abs(dx) < 10) {
+                moveX = false;
+            }
+
+            let normalizingFactor = Math.sqrt(dx * dx + dy * dy);
+            dx = dx / normalizingFactor;
+            dy = dy / normalizingFactor;
+
+            if (moveX) {
+                this.x += dx * dt * 0.007;
+            }
+            if (moveY) {
+                this.y += dy * dt * 0.007;
+            }
+
+            if (!moveX && !moveY) {
+                this.scaleFactor += this.scaleFactorSpeed * dt / 1000;
+                if (this.scaleFactor >= 30 && this.doEnd) {
+                    console.log("calling end")
+                    this.scaleFactorSpeed *= -6;
+                    this.game.end();
+                }
+                if (this.scaleFactor < 0) {
+                    this.game.animationFood = null;
+                }
+            }
+        }
     }
 }
 
@@ -305,6 +362,8 @@ class Player {
         this.lastStepDirection = DIRECTION_DOWN;
         this.playerPieces = [];
         this.updatePlayerPieces();
+        this.isEnd = false;
+        this.color = '#f58442'
     }
 
     turn (direction) {
@@ -320,7 +379,12 @@ class Player {
             var piece = this.playerPieces[n]
 
             c.beginPath();
-            c.fillStyle = 'red';
+            c.fillStyle = this.color;
+
+            if (this.isEnd && ((Date.now()) % 300 > 150)) {
+                c.fillStyle = 'white';
+            }
+
             c.fillRect(piece.x * gridSizeX, piece.y * gridSizeY, gridSizeX, gridSizeY);
             c.fill();
         }
@@ -405,7 +469,7 @@ class Player {
     }
 
     die() {
-        this.game.end();
+        this.game.startEndAnimations();
     }
 }
 
