@@ -71,6 +71,12 @@ class Swipe {
     }
 }
 
+function randomIntFromInterval(min, max) {
+    let rand = Math.random();
+    let result = Math.floor(rand * (max - min) + min);
+    return result == max ? result - 1 : result;
+}
+
 function createHiPPICanvas(w, h) {
     let ratio = window.devicePixelRatio;
     let cv = document.createElement("canvas");
@@ -97,16 +103,58 @@ const DIRECTION_RIGHT = 3;
 const gridWidth = 10;
 const gridHeight = 10;
 
-const gridSizeX = 50;
-const gridSizeY = 50;
+const gridSizeX = 30;
+const gridSizeY = 30;
 
 class Game {
     constructor() {
-        this.entities = [];
         this.foodGrid = new Array(gridWidth);
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
-        this.addEntity(new Player(1, 4, this));
+        this.player = new Player(1, 4, this);
+        this.randomizeFood();
+
+        this.initializeInput();
+    }
+
+    initializeInput() {
+        let selfReference = this;
+
+        addEventListener('keydown', function(e) {
+            switch (e.key) {
+                case 'ArrowLeft':
+                selfReference.player.turn(DIRECTION_LEFT);
+                    break;
+                case 'ArrowRight':
+                    selfReference.player.turn(DIRECTION_RIGHT);
+                    break;
+                case 'ArrowUp':
+                    selfReference.player.turn(DIRECTION_UP);
+                    break;
+                case 'ArrowDown':
+                    selfReference.player.turn(DIRECTION_DOWN);
+                    break;
+            }
+        });
+
+        swiper.onDown(() => {
+            lastSwipe = 'down';
+            selfReference.player.turn(DIRECTION_DOWN);
+        });
+        swiper.onLeft(() => {
+            lastSwipe = 'left';
+            selfReference.player.turn(DIRECTION_LEFT);
+        });
+        swiper.onRight(() => {
+            lastSwipe = 'right';
+            selfReference.player.turn(DIRECTION_RIGHT);
+        });
+        swiper.onUp(() => {
+            lastSwipe = 'up';
+            selfReference.player.turn(DIRECTION_UP);
+        });
+
+        swiper.run();
     }
 
     initializeGrids() {
@@ -133,10 +181,11 @@ class Game {
             c.stroke()
         }
 
-        
-        for (var x = 0; x < this.entities.length; x++) {
-            this.entities[x].draw();
-        }
+        // for (var x = 0; x < this.entities.length; x++) {
+        //     this.entities[x].draw();
+        // }
+
+        this.player.draw();
 
         for (var x = 0; x < this.curvePointGrid.length; x++) {
             for (var y = 0; y < this.curvePointGrid[x].length; y++) {
@@ -145,24 +194,53 @@ class Game {
                 }
             }
         }
+
+        for (var x = 0; x < this.foodGrid.length; x++) {
+            for (var y = 0; y < this.foodGrid[x].length; y++) {
+                if (this.foodGrid[x][y]) {
+                    this.foodGrid[x][y].draw();
+                }
+            }
+        }
     }
 
     update(dt) {
-        for (var x = 0; x < this.entities.length; x++) {
-            this.entities[x].update(dt);
-        }
-    }
- 
-    addEntity(entity) {
-        this.entities.push(entity);
+        this.player.update(dt);
     }
 
     end() {
-        this.entities = [];
         this.foodGrid = new Array(gridWidth);
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
-        this.addEntity(new Player(1, 4, this));
+        this.player = new Player(1, 4, this);
+        this.randomizeFood();
+    }
+
+    randomizeFood() {
+        let foodX = randomIntFromInterval(0, gridWidth);
+        let foodY = randomIntFromInterval(0, gridHeight);
+        
+        
+        while (this.player.checkDeath(foodX, foodY)) {
+            foodX = randomIntFromInterval(0, gridWidth);
+            foodY = randomIntFromInterval(0, gridHeight);
+        }
+        
+        this.foodGrid[foodX][foodY] = new Food(foodX, foodY);
+    }
+}
+
+class Food {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    draw() {
+        c.beginPath();
+        c.fillStyle = 'green';
+        c.fillRect(this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
+        c.fill();
     }
 }
 
@@ -194,68 +272,21 @@ class Player {
         this.game = game;
         this.x = x;
         this.y = y;
-        this.timePerStep = 300; // ms per step
+        this.timePerStep = 150; // ms per step
         this.stepTimer = 0;
         this.direction = DIRECTION_DOWN;
         this.size = 5;
         this.lastStepDirection = DIRECTION_DOWN;
         this.playerPieces = [];
+        this.updatePlayerPieces();
+    }
 
-        let selfReference = this;
+    turn (direction) {
+        let oppositeDirection = (direction + 2) % 4;
 
-        addEventListener('keydown', function(e) {
-            switch (e.key) {
-                case 'ArrowLeft':
-                    if (selfReference.direction != DIRECTION_RIGHT) {
-                        selfReference.direction = DIRECTION_LEFT;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (selfReference.direction != DIRECTION_LEFT) {
-                        selfReference.direction = DIRECTION_RIGHT;
-                    }
-                    break;
-                case 'ArrowUp':
-                    if (selfReference.direction != DIRECTION_DOWN) {
-                        selfReference.direction = DIRECTION_UP;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (selfReference.direction != DIRECTION_UP) {
-                        selfReference.direction = DIRECTION_DOWN;
-                    }
-                    break;
-            }
-        });
-
-        swiper.onDown(() => {
-            lastSwipe = 'down';
-            if (selfReference.direction != DIRECTION_UP) {
-                selfReference.direction = DIRECTION_DOWN;
-            }
-        });
-        swiper.onLeft(() => {
-            lastSwipe = 'left';
-            if (selfReference.direction != DIRECTION_RIGHT) {
-                selfReference.direction = DIRECTION_LEFT;
-            }
-        });
-        swiper.onRight(() => {
-            lastSwipe = 'right';
-            if (selfReference.direction != DIRECTION_LEFT) {
-                selfReference.direction = DIRECTION_RIGHT;
-            }
-        });
-        swiper.onUp(() => {
-            lastSwipe = 'up';
-            if (selfReference.direction != DIRECTION_DOWN) {
-                selfReference.direction = DIRECTION_UP;
-            }
-        });
-
-        swiper.run();
-
-        this.updatePlayerPieces(game)
+        if (this.lastStepDirection != oppositeDirection) {
+            this.direction = direction;
+        }
     }
 
     draw() {
@@ -278,26 +309,26 @@ class Player {
             
             if (this.direction != this.lastStepDirection) {
                 this.game.curvePointGrid[this.x][this.y] = new PlayerCurvePoint(this.x, this.y, this.lastStepDirection, this.direction);
-                console.log("pushing new curvepoint")
             }
-
             
             this.x += dx;
             this.y += dy;
             
             if (this.checkDeath(this.x, this.y)) {
-                this.die()
+                this.die();
+                return;
             }
 
-            this.stepTimer = 0;
-
             this.lastStepDirection = this.direction;
-            this.updatePlayerPieces(this.game)
+            this.updatePlayerPieces();
+            this.tryEat(this.x, this.y);
+            
+            this.stepTimer = 0;
         }
     }
 
     updatePlayerPieces() {
-        let newPieces = []
+        let newPieces = [];
 
         let x = this.x;
         let y = this.y;
@@ -324,13 +355,20 @@ class Player {
         this.playerPieces = newPieces;
     }
     
+    tryEat(x, y) {
+        if (this.game.foodGrid[x][y]) {
+            this.size += 1;
+            this.game.foodGrid[x][y] = null;
+            this.game.randomizeFood();
+        }
+    }
+
     checkDeath(x, y) {
-        console.log(x + " " + y)
         if (x >= gridWidth || y >= gridHeight || y < 0 || x < 0) {
             return true;
         }
         
-        for (var n = 1; n < this.size; n++) {
+        for (var n = 0; n < this.playerPieces.length; n++) {
             var piece = this.playerPieces[n];
             
             if (x == piece.x && y == piece.y) {
@@ -342,13 +380,10 @@ class Player {
     }
 
     die() {
+        // this.timePerStep = 1000000000000000000000000000000000;
         this.game.end();
     }
 }
-
-addEventListener('click', () => {
-    console.log('clicked!')
-})
 
 /////////////////
 // Game loop
@@ -366,15 +401,15 @@ function animate() {
     // clear screen
     c.clearRect(0, 0, canvas.width, canvas.height);
 
-    c.font = "30px Arial";
-    c.fillText("" + window.innerWidth + " " + window.innerHeight, 10, 50);
-    c.fillText(lastSwipe, 10, 90);
-    
-    
     // update game
     game.update(dt);
     // draw game
     game.draw();
+    
+    c.font = "30px Arial";
+    c.fillStyle = "cyan"
+    c.fillText("" + window.innerWidth + " " + window.innerHeight, 10, 50);
+    c.fillText(lastSwipe, 10, 90);
 
     requestAnimationFrame(animate);
 }
