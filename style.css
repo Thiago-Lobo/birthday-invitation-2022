@@ -4,9 +4,17 @@
     box-sizing: border-box;
 }
 
-canvas {
-    background-color: #3c3c3c;
+html {
+    height: 100%;
+}
 
+#theCanvas {
+    background-color: #3c3c3c;
+    top:0;
+    right:0;
+    bottom:0;
+    left:0;
+    position: fixed;
 }
 
 body {

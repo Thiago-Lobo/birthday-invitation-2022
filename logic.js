@@ -79,7 +79,7 @@ function randomIntFromInterval(min, max) {
 
 function createHiPPICanvas(w, h) {
     let ratio = window.devicePixelRatio;
-    let cv = document.createElement("canvas");
+    let cv = document.getElementById("theCanvas");
     document.body.appendChild(cv);
     cv.width = w * ratio;
     cv.height = h * ratio;
@@ -93,14 +93,14 @@ const canvas = createHiPPICanvas(window.innerWidth, window.innerHeight);
 const swiper = new Swipe(document);
 const c = canvas.getContext('2d');
 
-var audio = document.getElementById('audioScream');
-
 var lastSwipe = 'none';
 
 const DIRECTION_DOWN = 0;
 const DIRECTION_LEFT = 1;
 const DIRECTION_UP = 2;
 const DIRECTION_RIGHT = 3;
+
+const WIN_SIZE = 29 + 3;
 
 const gridWidth = 13;
 const gridSizeX = window.innerWidth / gridWidth;
@@ -177,40 +177,26 @@ class Game {
     }
 
     draw() {
-        for (var x = 0; x < gridWidth + 1; x++) {
-            c.beginPath();
-            c.strokeStyle = 'yellow';
-            c.moveTo(x * gridSizeX, 0);
-            c.lineTo(x * gridSizeX, gridHeight * gridSizeY);
-            c.stroke()
-        }
-
-        for (var y = 0; y < gridHeight + 1; y++) {
-            c.beginPath();
-            c.strokeStyle = 'yellow';
-            c.moveTo(0, y * gridSizeY);
-            c.lineTo(gridWidth * gridSizeX, y * gridSizeY);
-            c.stroke()
-        }
 
         this.player.draw();
-        this.food.draw();
+        if (this.food) {
+            this.food.draw();
+        }
         if (this.animationFood) {
             this.animationFood.draw();
         }
 
-        for (var x = 0; x < this.curvePointGrid.length; x++) {
-            for (var y = 0; y < this.curvePointGrid[x].length; y++) {
-                if (this.curvePointGrid[x][y]) {
-                    this.curvePointGrid[x][y].draw();
-                }
-            }
-        }
+        c.font = "40px Comic Sans MS";
+        c.fillStyle = "cyan"
+        c.fillText("Thiagos restantes: " + (WIN_SIZE - this.player.size), 30, 60);
     }
 
     update(dt) {
         this.player.update(dt);
-        this.food.update(dt);
+        
+        if (this.food) {
+            this.food.update(dt);
+        }
 
         if (this.animationFood) {
             this.animationFood.update(dt);
@@ -239,6 +225,26 @@ class Game {
         this.animationFood.doEnd = false;
 
         this.randomizeFood();
+    }
+
+    win() {
+        this.player.isWin = true;
+        this.food = null;
+        setTimeout(function(){
+            var fadeTarget = document.getElementById("theCanvas");
+            var fadeEffect = setInterval(function () {
+                if (!fadeTarget.style.opacity) {
+                    fadeTarget.style.opacity = 1;
+                }
+                if (fadeTarget.style.opacity > 0) {
+                    fadeTarget.style.opacity -= 0.01;
+                } else {
+                    fadeTarget.style.visibility = 'none';
+                    fadeTarget.remove()
+                    clearInterval(fadeEffect);
+                }
+            }, 20);
+        },0.5);
     }
 
     randomizeFood() {
@@ -360,11 +366,12 @@ class Player {
         this.timePerStep = 150; // ms per step
         this.stepTimer = 0;
         this.direction = DIRECTION_DOWN;
-        this.size = 5;
+        this.size = 3;
         this.lastStepDirection = DIRECTION_DOWN;
         this.playerPieces = [];
         this.updatePlayerPieces();
         this.isEnd = false;
+        this.isWin = false;
         this.color = '#f58442'
     }
 
@@ -383,7 +390,7 @@ class Player {
             c.beginPath();
             c.fillStyle = this.color;
 
-            if (this.isEnd && ((Date.now()) % 300 > 150)) {
+            if ((this.isEnd || this.isWin) && ((Date.now()) % 300 > 150)) {
                 c.fillStyle = 'white';
             }
 
@@ -393,7 +400,7 @@ class Player {
     }
 
     update(dt) {
-        if (!this.isEnd) {
+        if (!this.isEnd && !this.isWin) {
             this.stepTimer += dt;
     
             if (this.stepTimer >= this.timePerStep) {
@@ -452,6 +459,13 @@ class Player {
     tryEat(x, y) {
         if (this.game.food.x == x && this.game.food.y == y) {
             this.size += 1;
+
+            if (this.size >= WIN_SIZE) {
+                this.game.win();
+                return;
+            }
+
+            this.timePerStep -= 2;
             this.game.randomizeFood();
         }
     }
@@ -473,7 +487,6 @@ class Player {
     }
 
     die() {
-        audio.play();
         this.game.startEndAnimations();
     }
 }
@@ -498,11 +511,6 @@ function animate() {
     game.update(dt);
     // draw game
     game.draw();
-    
-    c.font = "30px Arial";
-    c.fillStyle = "cyan"
-    c.fillText("" + window.innerWidth + " " + window.innerHeight, 10, 50);
-    c.fillText(lastSwipe, 10, 90);
 
     requestAnimationFrame(animate);
 }
