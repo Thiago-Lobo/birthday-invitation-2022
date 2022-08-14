@@ -100,15 +100,30 @@ const DIRECTION_LEFT = 1;
 const DIRECTION_UP = 2;
 const DIRECTION_RIGHT = 3;
 
-const gridWidth = 10;
-const gridHeight = 10;
+const gridWidth = 15;
+const gridSizeX = window.innerWidth / gridWidth;
+const gridSizeY = gridSizeX;
+console.log(gridSizeY)
+console.log(window.innerHeight)
+console.log(canvas.height)
+const gridHeight = Math.floor(window.innerHeight / gridSizeY);
+console.log(gridHeight);
 
-const gridSizeX = 30;
-const gridSizeY = 30;
+var img = new Image();
+img.src = document.getElementById('sprite1').src;
+
+var images = document.getElementsByTagName('img'); 
+var sprites = [];
+
+for(var i = 0; i < images.length; i++) {
+    let img = new Image();
+    img.src = images[i].src;
+    sprites.push(img);
+}
+
 
 class Game {
     constructor() {
-        this.foodGrid = new Array(gridWidth);
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
         this.player = new Player(1, 4, this);
@@ -160,7 +175,6 @@ class Game {
     initializeGrids() {
         for (var x = 0; x < gridWidth; x++) {
             this.curvePointGrid[x] = new Array(gridHeight);
-            this.foodGrid[x] = new Array(gridHeight);
         }
     }
 
@@ -181,24 +195,13 @@ class Game {
             c.stroke()
         }
 
-        // for (var x = 0; x < this.entities.length; x++) {
-        //     this.entities[x].draw();
-        // }
-
         this.player.draw();
+        this.food.draw();
 
         for (var x = 0; x < this.curvePointGrid.length; x++) {
             for (var y = 0; y < this.curvePointGrid[x].length; y++) {
                 if (this.curvePointGrid[x][y]) {
                     this.curvePointGrid[x][y].draw();
-                }
-            }
-        }
-
-        for (var x = 0; x < this.foodGrid.length; x++) {
-            for (var y = 0; y < this.foodGrid[x].length; y++) {
-                if (this.foodGrid[x][y]) {
-                    this.foodGrid[x][y].draw();
                 }
             }
         }
@@ -226,7 +229,7 @@ class Game {
             foodY = randomIntFromInterval(0, gridHeight);
         }
         
-        this.foodGrid[foodX][foodY] = new Food(foodX, foodY);
+        this.food = new Food(foodX, foodY);
     }
 }
 
@@ -234,13 +237,36 @@ class Food {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this.sprite = sprites[randomIntFromInterval(0, sprites.length)];
     }
 
     draw() {
-        c.beginPath();
-        c.fillStyle = 'green';
-        c.fillRect(this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
-        c.fill();
+        let scaleFactor = gridSizeX / this.sprite.width;
+        
+        if (this.sprite.width > this.sprite.height) {
+            scaleFactor = gridSizeY / this.sprite.height;
+        }
+
+        scaleFactor *= 1.2;
+
+        let width = this.sprite.width * scaleFactor;
+        let height = this.sprite.height * scaleFactor;
+        let xOffset = this.x * gridSizeX + gridSizeX / 2;
+        let yOffset = this.y * gridSizeY + gridSizeY / 2;
+        let rotationScale = Math.sin(2 * Math.PI * 0.8 * Date.now() / 1000) * Math.PI / 7;
+
+        c.translate(xOffset, yOffset);
+        c.rotate(rotationScale);
+        c.drawImage(this.sprite, -width / 2, -height / 2, width, height);
+        c.rotate(-rotationScale);
+        c.translate(-xOffset, -yOffset);
+
+        // c.drawImage(this.sprite, this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
+
+        // c.beginPath();
+        // c.fillStyle = 'blue';
+        // c.fillRect(this.x * gridSizeX, this.y * gridSizeY, gridSizeX, gridSizeY);
+        // c.fill();
     }
 }
 
@@ -356,9 +382,8 @@ class Player {
     }
     
     tryEat(x, y) {
-        if (this.game.foodGrid[x][y]) {
+        if (this.game.food.x == x && this.game.food.y == y) {
             this.size += 1;
-            this.game.foodGrid[x][y] = null;
             this.game.randomizeFood();
         }
     }
@@ -380,7 +405,6 @@ class Player {
     }
 
     die() {
-        // this.timePerStep = 1000000000000000000000000000000000;
         this.game.end();
     }
 }
