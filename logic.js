@@ -100,6 +100,9 @@ const DIRECTION_LEFT = 1;
 const DIRECTION_UP = 2;
 const DIRECTION_RIGHT = 3;
 
+const PLAYER_X_START = 3;
+const PLAYER_Y_START = 4;
+
 const WIN_SIZE = 29 + 3;
 
 const gridWidth = window.innerWidth > window.innerHeight ? 26 : 13;
@@ -124,7 +127,7 @@ class Game {
     constructor() {
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
-        this.player = new Player(3, 4, this);
+        this.player = new Player(PLAYER_X_START, PLAYER_Y_START, this);
         this.randomizeFood();
 
         this.initializeInput();
@@ -212,7 +215,7 @@ class Game {
         this.curvePointGrid = new Array(gridWidth);
         this.initializeGrids();
 
-        this.player = new Player(1, 4, this);
+        this.player = new Player(PLAYER_X_START, PLAYER_Y_START, this);
         
         console.log("ending")
         this.animationFood = new Food(this.food.x, this.food.y, this)
