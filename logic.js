@@ -1,10 +1,17 @@
-const canvas = document.getElementById('sandbox');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-const c = canvas.getContext('2d');
+function createHiPPICanvas(w, h) {
+    let ratio = window.devicePixelRatio;
+    let cv = document.createElement("canvas");
+    document.body.appendChild(cv);
+    cv.width = w * ratio;
+    cv.height = h * ratio;
+    cv.style.width = w + "px";
+    cv.style.height = h + "px";
+    cv.getContext("2d").scale(ratio, ratio);
+    return cv;
+}
 
-console.log(window.innerWidth);
-console.log(window.innerHeight);
+const canvas = createHiPPICanvas(window.innerWidth, window.innerHeight);
+const c = canvas.getContext('2d');
 
 class Game {
     constructor() {
