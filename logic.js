@@ -186,9 +186,9 @@ class Game {
             this.animationFood.draw();
         }
 
-        c.font = "40px Comic Sans MS";
+        c.font = "20px Comic Sans MS";
         c.fillStyle = "cyan"
-        c.fillText("Thiagos restantes: " + (WIN_SIZE - this.player.size), 30, 60);
+        c.fillText("Thiagos restantes: " + (WIN_SIZE - this.player.size), 30, 40);
     }
 
     update(dt) {
