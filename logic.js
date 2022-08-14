@@ -66,7 +66,7 @@ class Swipe {
 
     run() {
         this.element.addEventListener('touchmove', function(evt) {
-            this.handleTouchMove(evt).bind(this);
+            this.handleTouchMove(evt);
         }.bind(this), false);
     }
 }
@@ -84,8 +84,24 @@ function createHiPPICanvas(w, h) {
 }
 
 const canvas = createHiPPICanvas(window.innerWidth, window.innerHeight);
-const swiper = new Swipe(canvas);
+const swiper = new Swipe(document);
 const c = canvas.getContext('2d');
+
+var lastSwipe = 'none';
+
+swiper.onDown(() => {
+    lastSwipe = 'down';
+});
+swiper.onLeft(() => {
+    lastSwipe = 'left';
+});
+swiper.onRight(() => {
+    lastSwipe = 'right';
+});
+swiper.onUp(() => {
+    lastSwipe = 'up';
+});
+swiper.run();
 
 class Game {
     constructor() {
@@ -166,21 +182,6 @@ addEventListener('click', () => {
 var lastTime = new Date();
 var game = new Game();
 
-var lastSwipe = 'none';
-
-swiper.onDown(() => {
-    lastSwipe = 'down';
-});
-swiper.onLeft(() => {
-    lastSwipe = 'left';
-});
-swiper.onRight(() => {
-    lastSwipe = 'right';
-});
-swiper.onUp(() => {
-    lastSwipe = 'up';
-});
-
 function animate() {
     let now = new Date();
     let dt = now - lastTime; // ms
@@ -193,7 +194,6 @@ function animate() {
     c.font = "30px Arial";
     c.fillText("" + window.innerWidth + " " + window.innerHeight, 10, 50);
     c.fillText(lastSwipe, 10, 90);
-    
     
     
     // update game
